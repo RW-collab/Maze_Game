@@ -61,7 +61,29 @@ class Enemy2(GameSprite):
         else:
             self.rect.y += self.speed
 
-        
+
+#class for obstacle sprites
+class Wall(sprite.Sprite):
+    def __init__(self, color_1, color_2, color_3, wall_x, wall_y, wall_width, wall_height):
+        super().__init__()
+        self.color_1 = color_1
+        self.color_2 = color_2
+        self.color_3 = color_3
+        self.width = wall_width
+        self.height = wall_height
+        # picture of the wall - a rectangle of the desired size and color
+        self.image = Surface((self.width, self.height))
+        self.image.fill((color_1, color_2, color_3))
+        # each sprite must store a rect property
+        self.rect = self.image.get_rect()
+        self.rect.x = wall_x
+        self.rect.y = wall_y
+    def draw_wall(self):
+        window.blit(self.image, (self.rect.x, self.rect.y))
+        #draw.rect(window, (self.color_1, self.color_2, self.color_3), (self.rect.x, self.rect.y, self.width, self.height))
+
+
+
 #Game scene
 win_width = 700
 win_height = 500
@@ -71,10 +93,16 @@ background = transform.scale(image.load("background.jpg"), (win_width, win_heigh
 
 
 #Game characters
-packman = Player('hero.png', 5, win_height - 80, 6)
+player = Player('hero.png', 5, win_height - 80, 6)
 monster1 = Enemy1('cyborg.png', win_width - 500, 280, 8)
 monster2 = Enemy2('cyborg.png', win_width - 100, 100, 10)
 final = GameSprite('treasure.png', win_width - 120, win_height - 80, 0)
+
+
+w1 = Wall(154, 205, 50, 100, 20, 450, 10)
+w2 = Wall(154, 205, 50, 100, 480, 350, 10)
+w3 = Wall(154, 205, 50, 100, 20, 10, 380)
+w4 = Wall(154, 205, 50, 200, 200, 10, 350)
 
 
 game = True 
@@ -83,27 +111,59 @@ FPS = 60
 finish = False
 
 
+font.init()
+font = font.Font(None, 70)
+win = font.render('YOU WIN!', True, (255, 215, 0))
+lose = font.render('YOU LOSE!', True, (180, 0, 0))
+
+
 #music
 mixer.init()
 mixer.music.load('jungles.ogg')
 mixer.music.play()
 
 
+money = mixer.Sound('money.ogg')
+kick = mixer.Sound('kick.ogg')
+
+
 while game:
     for e in event.get():
         if e.type == QUIT:
             game = False
+    
+    
     if finish != True:  
         window.blit(background,(0, 0))
-        packman.update()
+        player.update()
         monster1.update()
         monster2.update()
         final.update()
-        packman.reset()
+
+        player.reset()
         monster1.reset()
         monster2.reset()
         final.reset()
+
+
+        w1.draw_wall()
+        w2.draw_wall()
+        w3.draw_wall()
+        w4.draw_wall()
     
+
+        #"Losing" situation/condition
+    if sprite.collide_rect(player, monster1) or sprite.collide_rect(player, monster2) or sprite.collide_rect(player, w1) or sprite.collide_rect(player, w2) or sprite.collide_rect(player, w3):
+        finish = True
+        window.blit(lose, (200, 200))
+        kick.play()
+
+
+        if sprite.collide_rect(player, final):
+            finish = True
+            window.blit(win, (200 ,200))
+            money.play()
+
 
     display.update()
     clock.tick(FPS)
